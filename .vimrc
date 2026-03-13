@@ -1,5 +1,8 @@
 scriptencoding utf-8
 
+" IME制御: Normalモードに戻る際に英数入力へ切り替え
+autocmd InsertLeave * :call system("osascript -e 'tell application \"System Events\" to key code 102'")
+
 " Options
 set noswapfile
 set ruler
@@ -18,38 +21,81 @@ set expandtab
 " set tag
 set tags=~/.tags
 
-" Start NeoBundle Setting
-if has('vim_starting')
-  set runtimepath+=~/.vim/bundle/neobundle.vim/
+" Start dein.vim Setting
+let s:dein_dir = expand('~/.cache/dein')
+let s:dein_repo_dir = s:dein_dir . '/repos/github.com/Shougo/dein.vim'
+
+" dein.vim がなければ自動インストール
+if !isdirectory(s:dein_repo_dir)
+  execute '!git clone https://github.com/Shougo/dein.vim' s:dein_repo_dir
+endif
+execute 'set runtimepath+=' . s:dein_repo_dir
+
+if dein#load_state(s:dein_dir)
+  call dein#begin(s:dein_dir)
+
+  " dein.vim 自身を管理
+  call dein#add(s:dein_repo_dir)
+
+  " add plugins
+
+  " NERDTree
+  call dein#add('scrooloose/nerdtree')
+
+  " AutoClose
+  call dein#add('Townk/vim-autoclose')
+
+  " solarized
+  call dein#add('altercation/vim-colors-solarized')
+  " mustang
+  call dein#add('croaker/mustang-vim')
+  " jellybeans
+  call dein#add('nanotech/jellybeans.vim')
+  " molokai
+  call dein#add('tomasr/molokai')
+
+  call dein#add('Shougo/unite.vim')
+  call dein#add('ujihisa/unite-colorscheme')
+
+  " 行末の半角スペースを可視化
+  call dein#add('bronson/vim-trailing-whitespace')
+
+  " Git
+  call dein#add('tpope/vim-fugitive')
+
+  " for Rails
+  call dein#add('tpope/vim-rails')
+
+  " for Ruby -- auto add end
+  call dein#add('tpope/vim-endwise')
+
+  " for Ruby -- auto add comment on/off
+  call dein#add('tomtom/tcomment_vim')
+
+  " for Ruby indent guide
+  call dein#add('nathanaelkane/vim-indent-guides')
+
+  " add color for log
+  call dein#add('vim-scripts/AnsiEsc.vim')
+
+  " add neosnippet
+  call dein#add('Shougo/neosnippet')
+  call dein#add('Shougo/neosnippet-snippets')
+
+  call dein#end()
+  call dein#save_state()
+endif
+
+" 未インストールのプラグインがあればインストール
+if dein#check_install()
+  call dein#install()
 endif
 
 " Required:
-call neobundle#begin(expand('~/.vim/bundle/'))
-" Let NeoBundle manage NeoBundle
-NeoBundleFetch 'Shougo/neobundle.vim'
+filetype plugin indent on
 
-" add plugins
-
-" NERDTree
-NeoBundle 'scrooloose/nerdtree'
-
-" AutoClose
-NeoBundle 'Townk/vim-autoclose'
-
-" solarized
-NeoBundle 'altercation/vim-colors-solarized'
-" mustang
-NeoBundle 'croaker/mustang-vim'
-" jellybeans
-NeoBundle 'nanotech/jellybeans.vim'
-" molokai
-NeoBundle 'tomasr/molokai'
-
-NeoBundle 'Shougo/unite.vim'
-NeoBundle 'ujihisa/unite-colorscheme'
-
-" 行末の半角スペースを可視化
-NeoBundle 'bronson/vim-trailing-whitespace'
+" auto vim-indent-guides on
+let g:indent_guides_enable_on_vim_startup = 1
 
 " http://inari.hatenablog.com/entry/2014/05/05/231307
 " """"""""""""""""""""""""""""""
@@ -69,48 +115,17 @@ if has('syntax')
 endif
 """""""""""""""""""""""""""""""
 
-" Git
-NeoBundle 'tpope/vim-fugitive'
-
-" Required:
-filetype plugin indent on
-
-" for Rails
-NeoBundle 'tpope/vim-rails'
-
-" for Ruby -- auto add end
-NeoBundle 'tpope/vim-endwise'
-
-" for Ruby -- auto add comment on/off
-NeoBundle 'tomtom/tcomment_vim'
-
-" for Ruby indent guide
-NeoBundle 'nathanaelkane/vim-indent-guides'
-
-" auto vim-indent-guides on
-let g:indent_guides_enable_on_vim_startup = 1
-
-" add color for log
-NeoBundle 'vim-scripts/AnsiEsc.vim'
-
-" add neosnippet
-NeoBundle 'Shougo/neosnippet'
-NeoBundle 'Shougo/neosnippet-snippets'
-
 """"""
 " 順方向に補完候補を選択するには<c-n>とする。
-" 逆方向に補完候補を選択するには<c-p>とする。(※<c-○>はCtrl + ○という意味。) 
+" 逆方向に補完候補を選択するには<c-p>とする。(※<c-○>はCtrl + ○という意味。)
 " 補完候補から入力を決定するにはTabを押す。<Tab>を押すごとにマーカーごとにジャンプができる。
 """"""
-
-" end call NeoBundle
-call neobundle#end()
 
 " grep検索の実行後にQuickFix Listを表示する
 autocmd QuickFixCmdPost *grep* cwindow
 
 " ステータス行に現在のgitブランチを表示する
-if isdirectory(expand('~/.vim/bundle/vim-fugitive'))
+if isdirectory(expand('~/.cache/dein/repos/github.com/tpope/vim-fugitive'))
   set statusline+=%{fugitive#statusline()}
 endif
 
@@ -133,22 +148,22 @@ if has('conceal')
   set conceallevel=2 concealcursor=i
 endif
 
-NeoBundleCheck
-
-" End Neobundle Setting
+" End dein.vim Setting
 
 " Color Scheme Setting
 
 "colorscheme evening
-colorscheme desert
-if &term =~ "xterm-256color" || "screen-256color"
-  set t_Co=256
-  set t_Sf=[3%dm
-  set t_Sb=[4%dm
-elseif &term =~ "xterm-color"
-  set t_Co=8
-  set t_Sf=[3%dm
-  set t_Sb=[4%dm
+colorscheme jellybeans
+if !has('nvim')
+  if &term =~ "xterm-256color" || &term =~ "screen-256color"
+    set t_Co=256
+    set t_Sf=[3%dm
+    set t_Sb=[4%dm
+  elseif &term =~ "xterm-color"
+    set t_Co=8
+    set t_Sf=[3%dm
+    set t_Sb=[4%dm
+  endif
 endif
 
 syntax enable
@@ -157,12 +172,14 @@ hi PmenuSel cterm=reverse ctermfg=33 ctermbg=222 gui=reverse guifg=#3399ff guibg
 " Using the mouse on a terminal.
 if has('mouse')
   set mouse=a
-  if has('mouse_sgr')
-    set ttymouse=sgr
-    " I couldn't use has('mouse_sgr') 
-  elseif v:version > 703 || v:version is 703 && has('patch632') 
-    set ttymouse=sgr
-  else
-    set ttymouse=xterm2
+  if !has('nvim')
+    if has('mouse_sgr')
+      set ttymouse=sgr
+      " I couldn't use has('mouse_sgr')
+    elseif v:version > 703 || v:version is 703 && has('patch632')
+      set ttymouse=sgr
+    else
+      set ttymouse=xterm2
+    endif
   endif
 endif
