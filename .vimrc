@@ -97,6 +97,10 @@ filetype plugin indent on
 " auto vim-indent-guides on
 let g:indent_guides_enable_on_vim_startup = 1
 
+" NERDTree 設定
+nnoremap <C-t> :NERDTreeToggle<CR>
+let NERDTreeShowHidden=1
+
 " http://inari.hatenablog.com/entry/2014/05/05/231307
 " """"""""""""""""""""""""""""""
 " " 全角スペースの表示
