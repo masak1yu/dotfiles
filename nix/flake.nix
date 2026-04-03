@@ -114,8 +114,6 @@
             # Init tools
             eval "$(mise activate bash)"
             mise direnv activate
-            eval "$(starship init bash)"
-            eval "$(direnv hook bash)"
           '';
         };
 
