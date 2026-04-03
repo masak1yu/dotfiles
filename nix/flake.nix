@@ -16,6 +16,7 @@
 
         commonPackages = with pkgs; [
           # Core
+          claude-code
           git
           gh
           jq

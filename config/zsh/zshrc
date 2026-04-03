@@ -1,3 +1,11 @@
-eval "$(starship init zsh)"
 source ~/.zshenv_local
 eval "$(direnv hook zsh)"
+
+# starship は Nix 環境ロード後に初期化（初回プロンプト後に適用）
+_init_starship() {
+  if command -v starship &>/dev/null; then
+    eval "$(starship init zsh)"
+    precmd_functions=("${(@)precmd_functions:#_init_starship}")
+  fi
+}
+precmd_functions+=(_init_starship)
