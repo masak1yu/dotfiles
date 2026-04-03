@@ -88,8 +88,6 @@
           _op_load AWS_SECRET_ACCESS_KEY "op://Personal/dotfiles-env/AWS_SECRET_ACCESS_KEY"
           _op_load AWS_DEFAULT_REGION   "op://Personal/dotfiles-env/AWS_DEFAULT_REGION"
           _op_load AWS_MFA_SERIAL       "op://Personal/dotfiles-env/AWS_MFA_SERIAL"
-        else
-          echo "[warn] 1Password CLI not signed in — secrets not loaded. Run: eval \$(op signin)"
         fi
       '';
 
@@ -111,7 +109,6 @@
 
           # Init tools
           eval "$(mise activate bash)"
-          mise direnv activate
         '';
       };
 

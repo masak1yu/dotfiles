@@ -14,10 +14,12 @@ symlink() {
 }
 
 echo "==> Linking dotfiles..."
+symlink "$DOTFILES/config/zsh/zshenv"        "$HOME/.zshenv"
 symlink "$DOTFILES/config/zsh/zshrc"         "$HOME/.zshrc"
 symlink "$DOTFILES/config/direnv/direnvrc"   "$HOME/.config/direnv/direnvrc"
 symlink "$DOTFILES/config/direnv/envrc"      "$HOME/.envrc"
 symlink "$DOTFILES/config/starship.toml"     "$HOME/.config/starship.toml"
+symlink "$DOTFILES/config/direnv/direnv.toml" "$HOME/.config/direnv/direnv.toml"
 
 
 echo ""
