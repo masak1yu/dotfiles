@@ -20,6 +20,12 @@ symlink "$DOTFILES/config/direnv/envrc"      "$HOME/.envrc"
 symlink "$DOTFILES/config/starship.toml"     "$HOME/.config/starship.toml"
 
 echo ""
+echo "==> Creating CLI symlinks..."
+mkdir -p "$HOME/.local/bin"
+ln -sf "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" "$HOME/.local/bin/subl"
+echo "  linked: subl"
+
+echo ""
 echo "==> Done. Manual steps remaining:"
 echo ""
 echo "  [Before running this script]"
