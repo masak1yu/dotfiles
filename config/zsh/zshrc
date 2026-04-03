@@ -1,0 +1,3 @@
+eval "$(starship init zsh)"
+source ~/.zshenv_local
+eval "$(direnv hook zsh)"
