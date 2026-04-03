@@ -1,0 +1,5 @@
+# Sensitive configs — never commit
+config/git/
+.gitconfig
+config/ssh/
+config/aws/
