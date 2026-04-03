@@ -17,6 +17,7 @@ echo "==> Linking dotfiles..."
 symlink "$DOTFILES/config/zsh/zshrc"         "$HOME/.zshrc"
 symlink "$DOTFILES/config/direnv/direnvrc"   "$HOME/.config/direnv/direnvrc"
 symlink "$DOTFILES/config/direnv/envrc"      "$HOME/.envrc"
+symlink "$DOTFILES/config/starship.toml"     "$HOME/.config/starship.toml"
 
 echo ""
 echo "==> Done. Manual steps remaining:"
