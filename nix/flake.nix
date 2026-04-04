@@ -42,6 +42,9 @@
         starship
         zsh-autosuggestions
 
+        # Libraries
+        libyaml
+
         # DB clients / servers
         mysql80
         postgresql_14
@@ -97,6 +100,11 @@
         OBJC_DISABLE_INITIALIZE_FORK_SAFETY = "YES";
         PODMAN_COMPOSE_WARNING_LOGS = "false";
         JAVA_HOME = "${pkgs.openjdk}";
+
+        # Ruby native extensions のビルドパス
+        BUNDLE_BUILD__PG = "--with-pg-config=${pkgs.postgresql_14}/bin/pg_config";
+        BUNDLE_BUILD__MYSQL2 = "--with-mysql-config=${pkgs.mysql80}/bin/mysql_config";
+        BUNDLE_BUILD__PSYCH = "--with-libyaml-dir=${pkgs.libyaml}";
 
         shellHook = ''
           ${opLoader}
