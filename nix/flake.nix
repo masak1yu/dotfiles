@@ -107,8 +107,6 @@
           alias be='bundle exec'
           alias p-c='podman compose'
 
-          # Init tools
-          eval "$(mise activate bash)"
         '';
       };
 
@@ -136,6 +134,8 @@
                 "karabiner-elements"
               ];
             };
+
+            programs.zsh.enable = true;
 
             system.stateVersion = 5;
           })

@@ -12,16 +12,8 @@ export PATH="$HOME/go/bin:$PATH"
 export PATH="/Applications/Sublime Text.app/Contents/SharedSupport/bin:$PATH"
 export PATH="/Applications/RubyMine.app/Contents/MacOS:$PATH"
 
-# mise
+# mise（他の PATH 変更より後に実行することで mise が優先される）
 eval "$(mise activate zsh)"
-
-# bun
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
-[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
-
-# deno
-. "$HOME/.deno/env"
 
 # starship は Nix 環境ロード後に初期化（初回プロンプト後に適用）
 _init_starship() {
