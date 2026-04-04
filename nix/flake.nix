@@ -44,6 +44,8 @@
 
         # Libraries
         libyaml
+        zstd
+        libffi
 
         # DB clients / servers
         mysql80
@@ -95,16 +97,28 @@
       '';
 
       makeShell = extraSecrets: pkgs.mkShell {
-        packages = [ pkgs._1password-cli ];
+        # devShell の依存に含めることで nix が確実にビルド/ダウンロードする
+        packages = with pkgs; [
+          _1password-cli
+          postgresql_14.pg_config
+          mysql80
+          libyaml
+          libyaml.dev
+          libffi
+          libffi.dev
+          zstd
+        ];
 
         OBJC_DISABLE_INITIALIZE_FORK_SAFETY = "YES";
         PODMAN_COMPOSE_WARNING_LOGS = "false";
         JAVA_HOME = "${pkgs.openjdk}";
 
-        # Ruby native extensions のビルドパス
-        BUNDLE_BUILD__PG = "--with-pg-config=${pkgs.postgresql_14}/bin/pg_config";
+        # Ruby native extensions のビルドパス（nix evaluation 時に解決）
+        BUNDLE_BUILD__PG = "--with-pg-config=${pkgs.postgresql_14.pg_config}/bin/pg_config";
         BUNDLE_BUILD__MYSQL2 = "--with-mysql-config=${pkgs.mysql80}/bin/mysql_config";
-        BUNDLE_BUILD__PSYCH = "--with-libyaml-dir=${pkgs.libyaml}";
+        BUNDLE_BUILD__PSYCH = "--with-libyaml-include=${pkgs.libyaml.dev}/include --with-libyaml-lib=${pkgs.libyaml.out}/lib";
+        BUNDLE_BUILD__FFI = "--with-libffi-dir=${pkgs.libffi.dev}";
+        LDFLAGS = "-L${pkgs.zstd.out}/lib";
 
         shellHook = ''
           ${opLoader}
