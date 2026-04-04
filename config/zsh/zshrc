@@ -3,7 +3,6 @@ autoload -Uz compinit && compinit
 # Plugins
 source ~/.nix-profile/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 
-source ~/.zshenv_local
 eval "$(direnv hook zsh)"
 
 # PATH
