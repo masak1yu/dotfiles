@@ -138,6 +138,7 @@
           ({ pkgs, ... }: {
             nixpkgs.hostPlatform = system;
             nixpkgs.config.allowUnfree = true;
+            system.primaryUser = builtins.getEnv "USER";
 
             environment.systemPackages = commonPackages;
 
