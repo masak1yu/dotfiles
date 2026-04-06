@@ -5,12 +5,12 @@
 ### システム（nix-darwin）
 
 ```bash
-# パッケージ追加・設定変更後に適用
-nix run nix-darwin -- switch --flake ./nix#macbook
+# パッケージ追加・設定変更後に適用（sudo 必須）
+sudo nix run nix-darwin -- switch --flake ./nix#macbook
 
 # nixpkgs を最新に更新してから適用
 nix flake update ./nix
-nix run nix-darwin -- switch --flake ./nix#macbook
+sudo nix run nix-darwin -- switch --flake ./nix#macbook
 
 # ガベージコレクション（古い世代を削除）
 nix-collect-garbage -d
@@ -37,6 +37,24 @@ rm -rf .direnv && direnv allow
 
 # 現在の環境を再ロード
 direnv reload
+```
+
+### トラブルシューティング
+
+#### `system activation must now be run as root`
+`sudo` なしで実行した場合のエラー。必ず `sudo` を付けて実行する。
+
+#### `primary user `` does not exist`
+`system.primaryUser` の解決に失敗している。`builtins.getEnv` は nix の pure evaluation では環境変数を読めないため、`--impure` を付けて実行する：
+
+```bash
+sudo nix run nix-darwin -- switch --flake ./nix#macbook --impure
+```
+
+または `flake.nix` に直接ユーザー名を書く：
+
+```nix
+system.primaryUser = "ma.uchida";
 ```
 
 ### パッケージ調査
