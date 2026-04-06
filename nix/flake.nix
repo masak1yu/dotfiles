@@ -138,7 +138,7 @@
           ({ pkgs, ... }: {
             nixpkgs.hostPlatform = system;
             nixpkgs.config.allowUnfree = true;
-            system.primaryUser = builtins.getEnv "USER";
+            system.primaryUser = let u = builtins.getEnv "SUDO_USER"; in if u != "" then u else builtins.getEnv "USER";
 
             environment.systemPackages = commonPackages;
 
@@ -153,10 +153,11 @@
                 "ghostty"
                 "zed"
                 "vivaldi"
-                "filezilla"
                 "karabiner-elements"
               ];
             };
+
+            nix.enable = false;
 
             programs.zsh.enable = true;
 
