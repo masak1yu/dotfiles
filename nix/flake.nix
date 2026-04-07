@@ -83,15 +83,15 @@
         if command -v op &>/dev/null && op whoami &>/dev/null 2>&1; then
           _op_load GITHUB_TOKEN         "op://Personal/dotfiles-env/GITHUB_TOKEN"
           _op_load BUNDLE_GITHUB__COM   "op://Personal/dotfiles-env/BUNDLE_GITHUB__COM"
-          _op_load AWS_ASSUME_ROLE_TTL  "op://Personal/dotfiles-env/AWS_ASSUME_ROLE_TTL"
-          _op_load KAFKA_HEAP_OPTS      "op://Personal/dotfiles-env/KAFKA_HEAP_OPTS"
-          _op_load BOOTSTRAP_SERVER_270 "op://Personal/dotfiles-env/BOOTSTRAP_SERVER_270"
-          _op_load BOOTSTRAP_SERVER_351 "op://Personal/dotfiles-env/BOOTSTRAP_SERVER_351"
-          _op_load DATADOG_ENABLED      "op://Personal/dotfiles-env/DATADOG_ENABLED"
-          _op_load AWS_ACCESS_KEY_ID    "op://Personal/dotfiles-env/AWS_ACCESS_KEY_ID"
-          _op_load AWS_SECRET_ACCESS_KEY "op://Personal/dotfiles-env/AWS_SECRET_ACCESS_KEY"
-          _op_load AWS_DEFAULT_REGION   "op://Personal/dotfiles-env/AWS_DEFAULT_REGION"
-          _op_load AWS_MFA_SERIAL       "op://Personal/dotfiles-env/AWS_MFA_SERIAL"
+          _op_load AWS_ASSUME_ROLE_TTL  "op://RAKSUL/dotfiles-env/AWS_ASSUME_ROLE_TTL"
+          _op_load KAFKA_HEAP_OPTS      "op://RAKSUL/dotfiles-env/KAFKA_HEAP_OPTS"
+          _op_load BOOTSTRAP_SERVER_270 "op://RAKSUL/dotfiles-env/BOOTSTRAP_SERVER_270"
+          _op_load BOOTSTRAP_SERVER_351 "op://RAKSUL/dotfiles-env/BOOTSTRAP_SERVER_351"
+          _op_load DATADOG_ENABLED      "op://RAKSUL/dotfiles-env/DATADOG_ENABLED"
+          _op_load AWS_ACCESS_KEY_ID    "op://RAKSUL/dotfiles-env/AWS_ACCESS_KEY_ID"
+          _op_load AWS_SECRET_ACCESS_KEY "op://RAKSUL/dotfiles-env/AWS_SECRET_ACCESS_KEY"
+          _op_load AWS_DEFAULT_REGION   "op://RAKSUL/dotfiles-env/AWS_DEFAULT_REGION"
+          _op_load AWS_MFA_SERIAL       "op://RAKSUL/dotfiles-env/AWS_MFA_SERIAL"
         fi
       '';
 
