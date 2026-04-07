@@ -118,6 +118,7 @@
         BUNDLE_BUILD__PSYCH = "--with-libyaml-include=${pkgs.libyaml.dev}/include --with-libyaml-lib=${pkgs.libyaml.out}/lib";
         BUNDLE_BUILD__FFI = "--with-libffi-dir=${pkgs.libffi.dev}";
         LDFLAGS = "-L${pkgs.zstd.out}/lib";
+        DYLD_LIBRARY_PATH = "${pkgs.libyaml.out}/lib:${pkgs.libffi.out}/lib:${pkgs.zstd.out}/lib";
 
         shellHook = ''
           ${opLoader}
