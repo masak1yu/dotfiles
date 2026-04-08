@@ -26,6 +26,7 @@
         wget
         direnv
         just
+        lazygit
 
         # Development
         go
@@ -67,6 +68,7 @@
 
         # Test / browser
         chromedriver
+
       ];
 
       opLoader = ''
