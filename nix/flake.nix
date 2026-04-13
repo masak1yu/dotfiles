@@ -12,6 +12,8 @@
   outputs = { self, nixpkgs, nix-darwin }:
     let
       system = "aarch64-darwin";
+      username = let u = builtins.getEnv "SUDO_USER"; in if u != "" then u else builtins.getEnv "USER";
+      homeDir = "/Users/${username}";
 
       pkgs = import nixpkgs {
         inherit system;
@@ -259,7 +261,7 @@
           ({ pkgs, ... }: {
             nixpkgs.hostPlatform = system;
             nixpkgs.config.allowUnfree = true;
-            system.primaryUser = let u = builtins.getEnv "SUDO_USER"; in if u != "" then u else builtins.getEnv "USER";
+            system.primaryUser = username;
 
             environment.systemPackages = commonPackages;
 
@@ -279,6 +281,24 @@
             };
 
             nix.enable = false;
+
+            # MySQL 8.0 自動起動
+            launchd.daemons.mysql = {
+              serviceConfig = {
+                Label = "com.nix.mysql";
+                ProgramArguments = [
+                  "${pkgs.mysql80}/bin/mysqld"
+                  "--user=${username}"
+                  "--datadir=${homeDir}/.mysql/data"
+                  "--socket=/tmp/mysql.sock"
+                  "--port=3306"
+                ];
+                RunAtLoad = true;
+                KeepAlive = true;
+                StandardOutPath = "${homeDir}/.mysql/mysql.log";
+                StandardErrorPath = "${homeDir}/.mysql/mysql.error.log";
+              };
+            };
 
             programs.zsh.enable = true;
 
