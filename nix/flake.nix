@@ -282,17 +282,21 @@
 
             nix.enable = false;
 
-            # MySQL 8.0 自動起動
-            launchd.daemons.mysql = {
+            # MySQL 8.0 自動起動（初回はデータディレクトリを自動初期化）
+            launchd.daemons.mysql = let
+              mysqlDataDir = "${homeDir}/.mysql/data";
+              mysqlStartScript = pkgs.writeShellScript "mysql-start" ''
+                if [ ! -d "${mysqlDataDir}/mysql" ]; then
+                  mkdir -p "${mysqlDataDir}"
+                  chown ${username} "${homeDir}/.mysql" "${mysqlDataDir}"
+                  ${pkgs.mysql80}/bin/mysqld --initialize-insecure --user=${username} --datadir=${mysqlDataDir}
+                fi
+                exec ${pkgs.mysql80}/bin/mysqld --user=${username} --datadir=${mysqlDataDir} --socket=/tmp/mysql.sock --port=3306
+              '';
+            in {
               serviceConfig = {
                 Label = "com.nix.mysql";
-                ProgramArguments = [
-                  "${pkgs.mysql80}/bin/mysqld"
-                  "--user=${username}"
-                  "--datadir=${homeDir}/.mysql/data"
-                  "--socket=/tmp/mysql.sock"
-                  "--port=3306"
-                ];
+                ProgramArguments = [ "${mysqlStartScript}" ];
                 RunAtLoad = true;
                 KeepAlive = true;
                 StandardOutPath = "${homeDir}/.mysql/mysql.log";
