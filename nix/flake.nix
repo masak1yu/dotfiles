@@ -16,6 +16,15 @@
       pkgs = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
+        overlays = [
+          (final: prev: {
+            # Poppler: GObject Introspection typelib を有効にする（Ruby poppler gem 用）
+            poppler = prev.poppler.override {
+              introspectionSupport = true;
+              gobject-introspection = prev.gobject-introspection;
+            };
+          })
+        ];
       };
 
       commonPackages = with pkgs; [
@@ -46,6 +55,9 @@
         libyaml
         zstd
         libffi
+        openssl
+        openssl.dev
+        curl
 
         # DB clients / servers
         mysql80
@@ -107,6 +119,10 @@
         fi
       '';
 
+      # librdkafka 2.5.3 は OpenSSL 3.6 と非互換（ENGINE API 削除 + rand.h 暗黙 include 削除）
+      # devShell のビルド用に OpenSSL 3.0 LTS を使う
+      opensslBuild = pkgs.openssl_3;
+
       # macOS Nix Qt6 はフレームワーク形式のため、ruby-qt6 の extconf が
       # 期待する -lQt6Core / include/QtCore/QEvent が見つからない。
       # フレームワーク→通常形式のシンボリックリンクで橋渡しする。
@@ -139,6 +155,7 @@
           libffi
           libffi.dev
           zstd
+          curl
 
           # Ruby-GNOME (cairo / pango / gdk-pixbuf)
           cairo
@@ -191,8 +208,21 @@
         QT_INSTALL_HEADERS = "${qt6Compat}/include";
         QT_INSTALL_LIBS = "${qt6Compat}/lib";
 
-        # リンカフラグ（zstd + Qt6 フレームワーク検索パス）
-        LDFLAGS = "-L${pkgs.zstd.out}/lib -F${pkgs.qt6.qtbase.out}/lib";
+        # OpenSSL 3.0 ヘッダーパス（librdkafka 2.5.3 互換）
+        CPPFLAGS = "-I${opensslBuild.dev}/include";
+
+        # リンカフラグ（zstd + openssl + Qt6 フレームワーク検索パス）
+        # リンカフラグ（openssl_3 は rpath で直接埋め込み、他パッケージの 3.6 と衝突させない）
+        LDFLAGS = "-L${pkgs.zstd.out}/lib -L${opensslBuild.out}/lib -Wl,-rpath,${opensslBuild.out}/lib -L${pkgs.curl.out}/lib -F${pkgs.qt6.qtbase.out}/lib";
+
+        # Fontconfig 設定ファイル（Nix 環境ではシステムデフォルトが見つからない）
+        FONTCONFIG_FILE = "${pkgs.fontconfig.out}/etc/fonts/fonts.conf";
+
+        # GObject Introspection typelib 検索パス（Ruby poppler/rsvg2 gem 用）
+        GI_TYPELIB_PATH = builtins.concatStringsSep ":" [
+          "${pkgs.poppler.out}/lib/girepository-1.0"
+          "${pkgs.gobject-introspection}/lib/girepository-1.0"
+        ];
 
         # ランタイムライブラリパス
         DYLD_LIBRARY_PATH = builtins.concatStringsSep ":" [
@@ -207,6 +237,8 @@
           "${pkgs.librsvg.out}/lib"
           "${pkgs.poppler.out}/lib"
           "${pkgs.qt6.qtbase.out}/lib"
+          "${pkgs.openssl.out}/lib"
+          "${pkgs.curl.out}/lib"
         ];
 
         shellHook = ''
