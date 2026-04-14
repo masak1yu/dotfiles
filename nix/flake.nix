@@ -11,89 +11,34 @@
 
   outputs = { self, nixpkgs, nix-darwin }:
     let
-      system = "aarch64-darwin";
-      username = let u = builtins.getEnv "SUDO_USER"; in if u != "" then u else builtins.getEnv "USER";
-      homeDir = "/Users/${username}";
+      darwinSystem = "aarch64-darwin";
+      linuxSystem = "x86_64-linux";
 
-      pkgs = import nixpkgs {
-        inherit system;
-        config.allowUnfree = true;
-        overlays = [
-          (final: prev: {
-            # Poppler: GObject Introspection typelib を有効にする（Ruby poppler gem 用）
-            poppler = prev.poppler.override {
-              introspectionSupport = true;
-              gobject-introspection = prev.gobject-introspection;
-            };
-          })
-        ];
+      username = let u = builtins.getEnv "SUDO_USER"; in if u != "" then u else builtins.getEnv "USER";
+
+      popplerOverlay = final: prev: {
+        # Poppler: GObject Introspection typelib を有効にする（Ruby poppler gem 用）
+        poppler = prev.poppler.override {
+          introspectionSupport = true;
+          gobject-introspection = prev.gobject-introspection;
+        };
       };
 
-      commonPackages = with pkgs; [
-        # Core
-        git
-        gh
-        jq
-        wget
-        direnv
-        just
-        lazygit
+      mkPkgs = system: import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+        overlays = [ popplerOverlay ];
+      };
 
-        # Development
-        go
-        neovim
-        mise
-        openjdk
+      darwinPkgs = mkPkgs darwinSystem;
+      linuxPkgs = mkPkgs linuxSystem;
 
-        # Infrastructure
-        terraform
-        aws-vault
+      commonPackagesFor = pkgs: import ./common/packages.nix { inherit pkgs; };
 
-        # Shell
-        starship
-        zsh-autosuggestions
+      darwinHomeDir = "/Users/${username}";
+      linuxHomeDir = "/home/${username}";
 
-        # Libraries
-        libyaml
-        zstd
-        libffi
-        openssl
-        openssl.dev
-        curl
-
-        # DB clients / servers
-        mysql80
-        postgresql_14
-        redis
-        apacheKafka
-
-        # Media / graphics
-        imagemagick
-        graphviz
-        librsvg
-        poppler
-        cairo
-        pango
-        gdk-pixbuf
-
-        # GUI / rendering
-        gobject-introspection
-        qt6.qtbase
-        pkg-config
-
-        # TLS / certs
-        mkcert
-
-        # Build / release
-        goreleaser
-
-        # Build tools
-        cmake
-
-        # Test / browser
-        chromedriver
-
-      ];
+      # --- devShell 共通定義 ---
 
       opLoader = ''
         _op_load() {
@@ -123,21 +68,24 @@
 
       # librdkafka 2.5.3 は OpenSSL 3.6 と非互換（ENGINE API 削除 + rand.h 暗黙 include 削除）
       # devShell のビルド用に OpenSSL 3.0 LTS を使う
-      opensslBuild = pkgs.openssl_3;
+      opensslBuildFor = pkgs: pkgs.openssl_3;
 
       # macOS Nix Qt6 はフレームワーク形式のため、ruby-qt6 の extconf が
       # 期待する -lQt6Core / include/QtCore/QEvent が見つからない。
       # フレームワーク→通常形式のシンボリックリンクで橋渡しする。
-      qt6Compat = pkgs.runCommand "qt6-compat" {} ''
+      qt6Compat = darwinPkgs.runCommand "qt6-compat" {} ''
         mkdir -p $out/lib $out/include
-        for fw in ${pkgs.qt6.qtbase.out}/lib/Qt*.framework; do
+        for fw in ${darwinPkgs.qt6.qtbase.out}/lib/Qt*.framework; do
           name=$(basename "$fw" .framework)
           ln -s "$fw/$name" "$out/lib/lib''${name/Qt/Qt6}.dylib"
           ln -s "$fw/Headers" "$out/include/$name"
         done
       '';
 
-      makeShell = extraSecrets: pkgs.mkShell {
+      makeDarwinShell = extraSecrets: let
+        pkgs = darwinPkgs;
+        opensslBuild = opensslBuildFor pkgs;
+      in pkgs.mkShell {
         # ビルドツール（pkg-config の setup hook が buildInputs の
         # lib/pkgconfig を自動的に PKG_CONFIG_PATH へ追加する）
         nativeBuildInputs = with pkgs; [
@@ -213,7 +161,6 @@
         # OpenSSL 3.0 ヘッダーパス（librdkafka 2.5.3 互換）
         CPPFLAGS = "-I${opensslBuild.dev}/include";
 
-        # リンカフラグ（zstd + openssl + Qt6 フレームワーク検索パス）
         # リンカフラグ（openssl_3 は rpath で直接埋め込み、他パッケージの 3.6 と衝突させない）
         LDFLAGS = "-L${pkgs.zstd.out}/lib -L${opensslBuild.out}/lib -Wl,-rpath,${opensslBuild.out}/lib -L${pkgs.curl.out}/lib -F${pkgs.qt6.qtbase.out}/lib";
 
@@ -255,81 +202,157 @@
         '';
       };
 
-    in {
-      darwinConfigurations.macbook = nix-darwin.lib.darwinSystem {
-        modules = [
-          ({ pkgs, ... }: {
-            nixpkgs.hostPlatform = system;
-            nixpkgs.config.allowUnfree = true;
-            system.primaryUser = username;
-
-            environment.systemPackages = commonPackages;
-
-            homebrew = {
-              enable = true;
-              onActivation.cleanup = "uninstall";
-              casks = [
-                "firefox"
-                "google-chrome"
-                "slack"
-                "visual-studio-code"
-                "ghostty"
-                "zed"
-                "vivaldi"
-                "karabiner-elements"
-              ];
-            };
-
-            nix.enable = false;
-
-            # MySQL 8.0 自動起動（初回はデータディレクトリを自動初期化）
-            launchd.daemons.mysql = let
-              mysqlDataDir = "${homeDir}/.mysql/data";
-              mysqlStartScript = pkgs.writeShellScript "mysql-start" ''
-                if [ ! -d "${mysqlDataDir}/mysql" ]; then
-                  mkdir -p "${mysqlDataDir}"
-                  chown ${username} "${homeDir}/.mysql" "${mysqlDataDir}"
-                  ${pkgs.mysql80}/bin/mysqld --initialize-insecure --user=${username} --datadir=${mysqlDataDir}
-                fi
-                exec ${pkgs.mysql80}/bin/mysqld --user=${username} --datadir=${mysqlDataDir} --socket=/tmp/mysql.sock --port=3306
-              '';
-            in {
-              serviceConfig = {
-                Label = "com.nix.mysql";
-                ProgramArguments = [ "${mysqlStartScript}" ];
-                RunAtLoad = true;
-                KeepAlive = true;
-                StandardOutPath = "${homeDir}/.mysql/mysql.log";
-                StandardErrorPath = "${homeDir}/.mysql/mysql.error.log";
-              };
-            };
-
-            programs.zsh.enable = true;
-
-            system.stateVersion = 5;
-          })
+      makeLinuxShell = extraSecrets: let
+        pkgs = linuxPkgs;
+        opensslBuild = opensslBuildFor pkgs;
+      in pkgs.mkShell {
+        nativeBuildInputs = with pkgs; [
+          _1password-cli
+          pkg-config
         ];
+
+        buildInputs = with pkgs; [
+          # DB
+          postgresql_14.pg_config
+          mysql80
+
+          # 汎用ライブラリ
+          libyaml
+          libyaml.dev
+          libffi
+          libffi.dev
+          zstd
+          curl
+
+          # Ruby-GNOME (cairo / pango / gdk-pixbuf)
+          cairo
+          pango
+          gdk-pixbuf
+          glib
+          gobject-introspection
+          librsvg
+          poppler
+
+          # Ruby-GNOME の .pc Requires.private 推移的依存
+          freetype
+          fontconfig
+          libpng
+          pixman
+          zlib
+          harfbuzz
+          expat
+          pcre2
+          fribidi
+          libthai
+          libdatrie
+          libsysprof-capture
+
+          # X11
+          libX11
+          libXext
+          libXrender
+          libxcb
+          libXdmcp
+          libXau
+          xorgproto
+
+          # Qt6
+          qt6.qtbase
+        ];
+
+        PODMAN_COMPOSE_WARNING_LOGS = "false";
+        JAVA_HOME = "${pkgs.openjdk}";
+
+        BUNDLE_BUILD__PG = "--with-pg-config=${pkgs.postgresql_14.pg_config}/bin/pg_config";
+        BUNDLE_BUILD__MYSQL2 = "--with-mysql-config=${pkgs.mysql80}/bin/mysql_config";
+        BUNDLE_BUILD__PSYCH = "--with-libyaml-include=${pkgs.libyaml.dev}/include --with-libyaml-lib=${pkgs.libyaml.out}/lib";
+        BUNDLE_BUILD__FFI = "--with-libffi-dir=${pkgs.libffi.dev}";
+
+        # Linux では通常のライブラリパスなので Qt6 compat シム不要
+        QT_INSTALL_HEADERS = "${pkgs.qt6.qtbase.dev}/include";
+        QT_INSTALL_LIBS = "${pkgs.qt6.qtbase.out}/lib";
+
+        CPPFLAGS = "-I${opensslBuild.dev}/include";
+        LDFLAGS = "-L${pkgs.zstd.out}/lib -L${opensslBuild.out}/lib -Wl,-rpath,${opensslBuild.out}/lib -L${pkgs.curl.out}/lib";
+
+        FONTCONFIG_FILE = "${pkgs.fontconfig.out}/etc/fonts/fonts.conf";
+
+        GI_TYPELIB_PATH = builtins.concatStringsSep ":" [
+          "${pkgs.poppler.out}/lib/girepository-1.0"
+          "${pkgs.gobject-introspection}/lib/girepository-1.0"
+        ];
+
+        LD_LIBRARY_PATH = builtins.concatStringsSep ":" [
+          "${pkgs.libyaml.out}/lib"
+          "${pkgs.libffi.out}/lib"
+          "${pkgs.zstd.out}/lib"
+          "${pkgs.cairo.out}/lib"
+          "${pkgs.pango.out}/lib"
+          "${pkgs.gdk-pixbuf.out}/lib"
+          "${pkgs.glib.out}/lib"
+          "${pkgs.gobject-introspection}/lib"
+          "${pkgs.librsvg.out}/lib"
+          "${pkgs.poppler.out}/lib"
+          "${pkgs.qt6.qtbase.out}/lib"
+          "${pkgs.openssl.out}/lib"
+          "${pkgs.curl.out}/lib"
+        ];
+
+        shellHook = ''
+          ${opLoader}
+          ${commonSecrets}
+          ${extraSecrets}
+
+          # Aliases
+          alias be='bundle exec'
+          alias p-c='podman compose'
+
+        '';
       };
 
-      devShells.${system} = {
-        # Default shell — no Datadog keys
-        default = makeShell "";
+      datadogQaSecrets = ''
+        if command -v op &>/dev/null && op whoami &>/dev/null 2>&1; then
+          _op_load TF_VAR_datadog_api_key "op://Personal/datadog-qa/TF_VAR_datadog_api_key"
+          _op_load TF_VAR_datadog_app_key "op://Personal/datadog-qa/TF_VAR_datadog_app_key"
+        fi
+      '';
 
-        # QA environment with Datadog QA keys
-        datadog-qa = makeShell ''
-          if command -v op &>/dev/null && op whoami &>/dev/null 2>&1; then
-            _op_load TF_VAR_datadog_api_key "op://Personal/datadog-qa/TF_VAR_datadog_api_key"
-            _op_load TF_VAR_datadog_app_key "op://Personal/datadog-qa/TF_VAR_datadog_app_key"
-          fi
-        '';
+      datadogProdSecrets = ''
+        if command -v op &>/dev/null && op whoami &>/dev/null 2>&1; then
+          _op_load TF_VAR_datadog_api_key "op://Personal/datadog-prod/TF_VAR_datadog_api_key"
+          _op_load TF_VAR_datadog_app_key "op://Personal/datadog-prod/TF_VAR_datadog_app_key"
+        fi
+      '';
 
-        # Production environment with Datadog prod keys
-        datadog-prod = makeShell ''
-          if command -v op &>/dev/null && op whoami &>/dev/null 2>&1; then
-            _op_load TF_VAR_datadog_api_key "op://Personal/datadog-prod/TF_VAR_datadog_api_key"
-            _op_load TF_VAR_datadog_app_key "op://Personal/datadog-prod/TF_VAR_datadog_app_key"
-          fi
-        '';
+    in {
+      # --- macOS (Apple Silicon) ---
+      darwinConfigurations.macbook = nix-darwin.lib.darwinSystem (
+        import ./darwin/default.nix {
+          pkgs = darwinPkgs;
+          inherit username;
+          homeDir = darwinHomeDir;
+          commonPackages = commonPackagesFor darwinPkgs;
+        }
+      );
+
+      devShells.${darwinSystem} = {
+        default = makeDarwinShell "";
+        datadog-qa = makeDarwinShell datadogQaSecrets;
+        datadog-prod = makeDarwinShell datadogProdSecrets;
+      };
+
+      # --- Linux (x86_64) ---
+      nixosConfigurations.linux = nixpkgs.lib.nixosSystem (
+        import ./linux/default.nix {
+          pkgs = linuxPkgs;
+          commonPackages = commonPackagesFor linuxPkgs;
+        }
+      );
+
+      devShells.${linuxSystem} = {
+        default = makeLinuxShell "";
+        datadog-qa = makeLinuxShell datadogQaSecrets;
+        datadog-prod = makeLinuxShell datadogProdSecrets;
       };
     };
 }

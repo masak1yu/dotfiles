@@ -1,8 +1,22 @@
 # dotfiles
 
+## 構成
+
+```
+nix/
+├── flake.nix           # エントリポイント (inputs / outputs / devShell)
+├── flake.lock
+├── common/
+│   └── packages.nix    # macOS / Linux 共通パッケージ
+├── darwin/
+│   └── default.nix     # macOS 固有 (homebrew cask, launchd, kafka)
+└── linux/
+    └── default.nix     # NixOS 固有
+```
+
 ## Nix チートシート
 
-### システム（nix-darwin）
+### システム（macOS: nix-darwin）
 
 ```bash
 # パッケージ追加・設定変更後に適用（sudo 必須）
@@ -11,7 +25,18 @@ sudo nix run nix-darwin -- switch --flake ./nix#macbook
 # nixpkgs を最新に更新してから適用
 nix flake update ./nix
 sudo nix run nix-darwin -- switch --flake ./nix#macbook
+```
 
+### システム（Linux: NixOS）
+
+```bash
+# 設定適用
+sudo nixos-rebuild switch --flake ./nix#linux
+```
+
+### 共通
+
+```bash
 # ガベージコレクション（古い世代を削除）
 nix-collect-garbage -d
 
