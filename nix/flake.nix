@@ -96,6 +96,7 @@
         # ライブラリ — pkg-config が .pc を自動検出する
         buildInputs = with pkgs; [
           # DB
+          postgresql_14
           postgresql_14.pg_config
           mysql80
 

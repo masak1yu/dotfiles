@@ -50,6 +50,29 @@
         };
       };
 
+      # PostgreSQL 14 自動起動（初回はデータディレクトリを自動初期化）
+      launchd.daemons.postgresql = let
+        pgDataDir = "${homeDir}/.postgresql/data";
+        pgStartScript = pkgs.writeShellScript "postgresql-start" ''
+          if [ ! -d "${pgDataDir}/base" ]; then
+            mkdir -p "${pgDataDir}"
+            chown ${username} "${homeDir}/.postgresql" "${pgDataDir}"
+            ${pkgs.postgresql_14}/bin/initdb -D ${pgDataDir} -U postgres --no-locale -E UTF8
+          fi
+          exec ${pkgs.postgresql_14}/bin/postgres -D ${pgDataDir} -k /tmp -p 5432
+        '';
+      in {
+        serviceConfig = {
+          Label = "com.nix.postgresql";
+          ProgramArguments = [ "${pgStartScript}" ];
+          RunAtLoad = true;
+          KeepAlive = true;
+          UserName = username;
+          StandardOutPath = "${homeDir}/.postgresql/postgresql.log";
+          StandardErrorPath = "${homeDir}/.postgresql/postgresql.error.log";
+        };
+      };
+
       programs.zsh.enable = true;
 
       system.stateVersion = 5;

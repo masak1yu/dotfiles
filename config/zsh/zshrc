@@ -22,3 +22,5 @@ _init_starship() {
   fi
 }
 precmd_functions+=(_init_starship)
+
+alias claude-mem='/Users/ma.uchida/.bun/bin/bun "/Users/ma.uchida/.claude/plugins/cache/thedotmack/claude-mem/12.1.1/scripts/worker-service.cjs"'
