@@ -24,10 +24,23 @@
         };
       };
 
+      # rugged gem は libgit2 ~> 1.7.0 を要求するが nixpkgs-unstable は 1.9.x
+      libgit2_1_7Overlay = final: prev: {
+        libgit2_1_7 = prev.libgit2.overrideAttrs (_: {
+          version = "1.7.2";
+          src = prev.fetchFromGitHub {
+            owner = "libgit2";
+            repo = "libgit2";
+            rev = "v1.7.2";
+            hash = "sha256-fVPY/byE2/rxmv/bUykcAbmUFMlF3UZogVuTzjOXJUU=";
+          };
+        });
+      };
+
       mkPkgs = system: import nixpkgs {
         inherit system;
         config.allowUnfree = true;
-        overlays = [ popplerOverlay ];
+        overlays = [ popplerOverlay libgit2_1_7Overlay ];
       };
 
       darwinPkgs = mkPkgs darwinSystem;
@@ -108,6 +121,13 @@
           zstd
           curl
 
+          # Image processing (rmagick gem)
+          imagemagick
+          imagemagick.dev
+
+          # rugged gem requires libgit2 ~> 1.7.0
+          libgit2_1_7
+
           # Ruby-GNOME (cairo / pango / gdk-pixbuf)
           cairo
           pango
@@ -154,6 +174,7 @@
         BUNDLE_BUILD__MYSQL2 = "--with-mysql-config=${pkgs.mysql80}/bin/mysql_config";
         BUNDLE_BUILD__PSYCH = "--with-libyaml-include=${pkgs.libyaml.dev}/include --with-libyaml-lib=${pkgs.libyaml.out}/lib";
         BUNDLE_BUILD__FFI = "--with-libffi-dir=${pkgs.libffi.dev}";
+        BUNDLE_BUILD__RUGGED = "--use-system-libraries";
 
         # ruby-qt6 extconf 用: フレームワーク形式→通常形式シンボリックリンク
         QT_INSTALL_HEADERS = "${qt6Compat}/include";
@@ -179,6 +200,7 @@
           "${pkgs.libyaml.out}/lib"
           "${pkgs.libffi.out}/lib"
           "${pkgs.zstd.out}/lib"
+          "${pkgs.imagemagick.out}/lib"
           "${pkgs.cairo.out}/lib"
           "${pkgs.pango.out}/lib"
           "${pkgs.gdk-pixbuf.out}/lib"
