@@ -9,6 +9,13 @@
 
       environment.systemPackages = commonPackages ++ (with pkgs; [
         apacheKafka
+
+        # Ruby build dependencies
+        ruby_3_3  # mise が Ruby をビルドする際のホスト Ruby
+        autoconf
+        automake
+        bison
+        readline
       ]);
 
       homebrew = {
@@ -71,6 +78,10 @@
           StandardOutPath = "${homeDir}/.postgresql/postgresql.log";
           StandardErrorPath = "${homeDir}/.postgresql/postgresql.error.log";
         };
+      };
+
+      environment.variables = {
+        RUBY_CONFIGURE_OPTS = "--with-baseruby=/run/current-system/sw/bin/ruby";
       };
 
       programs.zsh.enable = true;
