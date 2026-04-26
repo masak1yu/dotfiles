@@ -2,7 +2,19 @@
 
 {
   modules = [
-    ({ pkgs, ... }: {
+    ({ pkgs, ... }:
+    let
+      # clang 18+ で追加された -Wdefault-const-init-field-unsafe が Ruby 3.2 ヘッダーで
+      # エラーになる。thrift 等の extconf.rb は $CFLAGS を上書きするため CC/CFLAGS 環境変数
+      # では回避できない。clang/clang++ という名前の wrapper を PATH 先頭に置いて全ての
+      # native gem ビルドで透過的にフラグを抑制する。
+      clangWrapper = pkgs.writeShellScriptBin "clang" ''
+        exec ${pkgs.llvmPackages.clang}/bin/clang "$@" -Wno-default-const-init-field-unsafe
+      '';
+      clangppWrapper = pkgs.writeShellScriptBin "clang++" ''
+        exec ${pkgs.llvmPackages.clang}/bin/clang++ "$@" -Wno-default-const-init-field-unsafe
+      '';
+    in {
       nixpkgs.hostPlatform = "aarch64-darwin";
       nixpkgs.config.allowUnfree = true;
       system.primaryUser = username;
@@ -83,6 +95,12 @@
       environment.variables = {
         RUBY_CONFIGURE_OPTS = "--with-baseruby=/run/current-system/sw/bin/ruby";
       };
+
+      # clang/clang++ wrapper を PATH 先頭に挿入する。
+      # extconf.rb が $CFLAGS を上書きしても、clang 実行時に末尾フラグが追加されるため有効。
+      programs.zsh.shellInit = ''
+        export PATH="${clangWrapper}/bin:${clangppWrapper}/bin:$PATH"
+      '';
 
       programs.zsh.enable = true;
 
