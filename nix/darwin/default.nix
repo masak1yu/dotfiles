@@ -28,6 +28,11 @@
         automake
         bison
         readline
+
+        # karafka-rdkafka が OpenSSL 3.x と互換性のない ENGINE API を使う librdkafka を
+        # ソースからコンパイルしようとして失敗するため、Nix 管理の librdkafka を使う。
+        # RDKAFKA_EXT_PATH を設定することでコンパイルをスキップできる。
+        rdkafka
       ]);
 
       homebrew = {
@@ -44,6 +49,12 @@
           "karabiner-elements"
         ];
       };
+
+      fonts.packages = with pkgs.nerd-fonts; [
+        jetbrains-mono
+        hack
+        fira-code
+      ];
 
       nix.enable = false;
 
@@ -97,6 +108,9 @@
         # Ruby 3.2+ の静的リンク時に -lresolv が要求されるが macOS 14.4+ で削除された。
         # Nix の libresolv を LIBRARY_PATH に追加して解決する。
         LIBRARY_PATH = "${pkgs.darwin.libresolv}/lib";
+        # karafka-rdkafka が librdkafka をソースからコンパイルする際に OpenSSL 3.x の
+        # ENGINE API 非互換でビルドが失敗する。Nix 管理の librdkafka を指定してコンパイルをスキップ。
+        RDKAFKA_EXT_PATH = "${pkgs.rdkafka}";
       };
 
       # clang/clang++ wrapper を PATH 先頭に挿入する。
