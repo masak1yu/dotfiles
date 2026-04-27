@@ -9,10 +9,10 @@
       # では回避できない。clang/clang++ という名前の wrapper を PATH 先頭に置いて全ての
       # native gem ビルドで透過的にフラグを抑制する。
       clangWrapper = pkgs.writeShellScriptBin "clang" ''
-        exec ${pkgs.llvmPackages.clang}/bin/clang "$@" -Wno-default-const-init-field-unsafe
+        exec ${pkgs.llvmPackages.clang}/bin/clang "$@" -Wno-default-const-init-field-unsafe -Wno-error=implicit-function-declaration
       '';
       clangppWrapper = pkgs.writeShellScriptBin "clang++" ''
-        exec ${pkgs.llvmPackages.clang}/bin/clang++ "$@" -Wno-default-const-init-field-unsafe
+        exec ${pkgs.llvmPackages.clang}/bin/clang++ "$@" -Wno-default-const-init-field-unsafe -Wno-error=implicit-function-declaration
       '';
     in {
       nixpkgs.hostPlatform = "aarch64-darwin";
@@ -94,6 +94,9 @@
 
       environment.variables = {
         RUBY_CONFIGURE_OPTS = "--with-baseruby=/run/current-system/sw/bin/ruby";
+        # Ruby 3.2+ の静的リンク時に -lresolv が要求されるが macOS 14.4+ で削除された。
+        # Nix の libresolv を LIBRARY_PATH に追加して解決する。
+        LIBRARY_PATH = "${pkgs.darwin.libresolv}/lib";
       };
 
       # clang/clang++ wrapper を PATH 先頭に挿入する。
