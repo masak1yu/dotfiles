@@ -99,6 +99,11 @@
         pkgs = darwinPkgs;
         opensslBuild = opensslBuildFor pkgs;
       in pkgs.mkShell {
+        # Nix clang-wrapper が hardening フラグとして -Werror=format-security を
+        # 自動付与するため、format 系 hardening を無効化する。
+        # （google-protobuf 3.25.1 等の古い gem の extconf がこれで失敗する）
+        hardeningDisable = [ "format" ];
+
         # ビルドツール（pkg-config の setup hook が buildInputs の
         # lib/pkgconfig を自動的に PKG_CONFIG_PATH へ追加する）
         nativeBuildInputs = with pkgs; [
