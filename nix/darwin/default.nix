@@ -19,7 +19,7 @@
       nixpkgs.config.allowUnfree = true;
       system.primaryUser = username;
 
-      environment.systemPackages = commonPackages ++ (with pkgs; [
+      environment.systemPackages = commonPackages ++ [ clangWrapper clangppWrapper ] ++ (with pkgs; [
         apacheKafka
 
         # Ruby build dependencies
@@ -115,9 +115,8 @@
 
       # clang/clang++ wrapper を PATH 先頭に挿入する。
       # extconf.rb が $CFLAGS を上書きしても、clang 実行時に末尾フラグが追加されるため有効。
-      programs.zsh.shellInit = ''
-        export PATH="${clangWrapper}/bin:${clangppWrapper}/bin:$PATH"
-      '';
+      # environment.systemPath は /etc/zshenv 経由で全シェル（非インタラクティブ含む）に適用される。
+      environment.systemPath = [ "${clangWrapper}/bin" "${clangppWrapper}/bin" ];
 
       programs.zsh.enable = true;
 
