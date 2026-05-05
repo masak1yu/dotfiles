@@ -170,6 +170,14 @@
           qt6.qtbase
         ];
 
+        # nix develop 内では stdenv の clang-wrapper が PATH 先頭に来て
+        # environment.systemPath のカスタムラッパーを隠してしまう。
+        # /run/current-system/sw/bin/clang は darwin/default.nix の
+        # clangWrapper（-Wno-default-const-init-field-unsafe 付き）への安定したシンボリックリンク。
+        # これを CC に設定することで extconf.rb の try_compile が -Werror 環境でも通る。
+        CC = "/run/current-system/sw/bin/clang";
+        CXX = "/run/current-system/sw/bin/clang++";
+
         OBJC_DISABLE_INITIALIZE_FORK_SAFETY = "YES";
         PODMAN_COMPOSE_WARNING_LOGS = "false";
         JAVA_HOME = "${pkgs.openjdk}";
