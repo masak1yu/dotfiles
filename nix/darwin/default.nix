@@ -71,7 +71,7 @@
             chown ${username} "${homeDir}/.mysql" "${mysqlDataDir}"
             ${pkgs.mysql80}/bin/mysqld --initialize-insecure --user=${username} --datadir=${mysqlDataDir}
           fi
-          exec ${pkgs.mysql80}/bin/mysqld --user=${username} --datadir=${mysqlDataDir} --socket=/tmp/mysql.sock --port=3306
+          exec ${pkgs.mysql80}/bin/mysqld --user=${username} --datadir=${mysqlDataDir} --socket=/tmp/mysql.sock --port=3306 --mysqlx=0
         '';
       in {
         serviceConfig = {
@@ -79,6 +79,7 @@
           ProgramArguments = [ "${mysqlStartScript}" ];
           RunAtLoad = true;
           KeepAlive = true;
+          UserName = username;
           StandardOutPath = "${homeDir}/.mysql/mysql.log";
           StandardErrorPath = "${homeDir}/.mysql/mysql.error.log";
         };
