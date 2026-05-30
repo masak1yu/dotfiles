@@ -39,20 +39,7 @@
         rdkafka
       ]);
 
-      homebrew = {
-        enable = true;
-        onActivation.cleanup = "uninstall";
-        casks = [
-          "firefox"
-          "google-chrome"
-          "slack"
-          "visual-studio-code"
-          "ghostty"
-          "zed"
-          "vivaldi"
-          "karabiner-elements"
-        ];
-      };
+      homebrew.enable = false;
 
       fonts.packages = with pkgs.nerd-fonts; [
         jetbrains-mono
@@ -118,6 +105,11 @@
         # karafka-rdkafka が librdkafka をソースからコンパイルする際に OpenSSL 3.x の
         # ENGINE API 非互換でビルドが失敗する。Nix 管理の librdkafka を指定してコンパイルをスキップ。
         RDKAFKA_EXT_PATH = "${pkgs.rdkafka}";
+        # nix-darwin のアクティベーションが xcode-select -s で DEVELOPER_DIR を Nix の
+        # apple-sdk に向けるため xcrun metal 等が失敗する。DEVELOPER_DIR を明示して
+        # xcrun が本物の Xcode を参照するよう上書きする。Nix clang は SDK パスをバイナリに
+        # 持つため Ruby/gem ビルドには影響しない。
+        DEVELOPER_DIR = "/Applications/Xcode.app/Contents/Developer";
       };
 
       # clang/clang++ wrapper を PATH 先頭に挿入する。
