@@ -1,3 +1,4 @@
 export DIRENV_LOG_FORMAT=""
+export DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
 
 [[ -f ~/.zshenv_local ]] && source ~/.zshenv_local
