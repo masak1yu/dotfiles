@@ -11,6 +11,10 @@ export PATH="$HOME/go/bin:$PATH"
 export PATH="/Applications/Sublime Text.app/Contents/SharedSupport/bin:$PATH"
 export PATH="/Applications/RubyMine.app/Contents/MacOS:$PATH"
 
+# depot_tools (Chromium build tools: gn, ninja, gclient)
+export PATH="$HOME/workspace/depot_tools:$PATH"
+export DEPOT_TOOLS_UPDATE=0
+
 # mise（他の PATH 変更より後に実行することで mise が優先される）
 eval "$(mise activate zsh)"
 
