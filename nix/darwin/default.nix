@@ -109,6 +109,8 @@
       };
 
       environment.variables = {
+        EDITOR = "vim";
+        VISUAL = "vim";
         RUBY_CONFIGURE_OPTS = "--with-baseruby=/run/current-system/sw/bin/ruby";
         # Ruby 3.2+ の静的リンク時に -lresolv が要求されるが macOS 14.4+ で削除された。
         # Nix の libresolv を LIBRARY_PATH に追加して解決する。

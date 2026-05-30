@@ -4,6 +4,7 @@ with pkgs; [
   # Core
   git
   gh
+  pijul
   jq
   wget
   direnv
