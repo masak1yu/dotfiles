@@ -133,6 +133,10 @@
           # rugged gem requires libgit2 ~> 1.7.0
           libgit2_1_7
 
+          # rgeo-proj4 gem requires PROJ 6.2+
+          proj
+          proj.dev
+
           # Ruby-GNOME (cairo / pango / gdk-pixbuf)
           cairo
           pango
@@ -188,6 +192,8 @@
         BUNDLE_BUILD__PSYCH = "--with-libyaml-include=${pkgs.libyaml.dev}/include --with-libyaml-lib=${pkgs.libyaml.out}/lib";
         BUNDLE_BUILD__FFI = "--with-libffi-dir=${pkgs.libffi.dev}";
         BUNDLE_BUILD__RUGGED = "--use-system-libraries";
+        # rgeo-proj4 の extconf は pkg-config を使わず固定パス探索のため、dir_config に明示する
+        BUNDLE_BUILD__RGEO___PROJ4 = "--with-proj-include=${pkgs.proj.dev}/include --with-proj-lib=${pkgs.proj.out}/lib";
 
         # ruby-qt6 extconf 用: フレームワーク形式→通常形式シンボリックリンク
         QT_INSTALL_HEADERS = "${qt6Compat}/include";
@@ -210,6 +216,7 @@
 
         # ランタイムライブラリパス
         DYLD_LIBRARY_PATH = builtins.concatStringsSep ":" [
+          "${pkgs.proj.out}/lib"
           "${pkgs.libyaml.out}/lib"
           "${pkgs.libffi.out}/lib"
           "${pkgs.zstd.out}/lib"
@@ -260,6 +267,10 @@
           zstd
           curl
 
+          # rgeo-proj4 gem requires PROJ 6.2+
+          proj
+          proj.dev
+
           # Ruby-GNOME (cairo / pango / gdk-pixbuf)
           cairo
           pango
@@ -303,6 +314,8 @@
         BUNDLE_BUILD__MYSQL2 = "--with-mysql-config=${pkgs.mysql80}/bin/mysql_config";
         BUNDLE_BUILD__PSYCH = "--with-libyaml-include=${pkgs.libyaml.dev}/include --with-libyaml-lib=${pkgs.libyaml.out}/lib";
         BUNDLE_BUILD__FFI = "--with-libffi-dir=${pkgs.libffi.dev}";
+        # rgeo-proj4 の extconf は pkg-config を使わず固定パス探索のため、dir_config に明示する
+        BUNDLE_BUILD__RGEO___PROJ4 = "--with-proj-include=${pkgs.proj.dev}/include --with-proj-lib=${pkgs.proj.out}/lib";
 
         # Linux では通常のライブラリパスなので Qt6 compat シム不要
         QT_INSTALL_HEADERS = "${pkgs.qt6.qtbase.dev}/include";
@@ -319,6 +332,7 @@
         ];
 
         LD_LIBRARY_PATH = builtins.concatStringsSep ":" [
+          "${pkgs.proj.out}/lib"
           "${pkgs.libyaml.out}/lib"
           "${pkgs.libffi.out}/lib"
           "${pkgs.zstd.out}/lib"
