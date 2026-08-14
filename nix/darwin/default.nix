@@ -50,7 +50,10 @@
       nix.enable = false;
 
       # MySQL 8.0 自動起動（初回はデータディレクトリを自動初期化）
-      launchd.daemons.mysql = let
+      # system daemon にしないのは、どうせ自分のユーザーで動くのに起動・停止のたびに
+      # sudo が必要になり、TTY のない環境（エージェント等）から操作できなくなるため。
+      # user agent なら ~/Library/LaunchAgents に置かれ `launchctl ... gui/$UID` で扱える。
+      launchd.user.agents.mysql = let
         mysqlDataDir = "${homeDir}/.mysql/data";
         mysqlStartScript = pkgs.writeShellScript "mysql-start" ''
           if [ ! -d "${mysqlDataDir}/mysql" ]; then
@@ -66,14 +69,14 @@
           ProgramArguments = [ "${mysqlStartScript}" ];
           RunAtLoad = true;
           KeepAlive = true;
-          UserName = username;
           StandardOutPath = "${homeDir}/.mysql/mysql.log";
           StandardErrorPath = "${homeDir}/.mysql/mysql.error.log";
         };
       };
 
       # PostgreSQL 14 自動起動（初回はデータディレクトリを自動初期化）
-      launchd.daemons.postgresql = let
+      # user agent にしている理由は mysql と同じ。
+      launchd.user.agents.postgresql = let
         pgDataDir = "${homeDir}/.postgresql/data";
         pgStartScript = pkgs.writeShellScript "postgresql-start" ''
           if [ ! -d "${pgDataDir}/base" ]; then
@@ -89,7 +92,6 @@
           ProgramArguments = [ "${pgStartScript}" ];
           RunAtLoad = true;
           KeepAlive = true;
-          UserName = username;
           StandardOutPath = "${homeDir}/.postgresql/postgresql.log";
           StandardErrorPath = "${homeDir}/.postgresql/postgresql.error.log";
         };
