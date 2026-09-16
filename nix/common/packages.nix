@@ -24,6 +24,7 @@ with pkgs; [
   # Shell
   starship
   zsh-autosuggestions
+  tmux
 
   # Libraries
   libyaml
