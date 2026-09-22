@@ -107,6 +107,9 @@
         # karafka-rdkafka が librdkafka をソースからコンパイルする際に OpenSSL 3.x の
         # ENGINE API 非互換でビルドが失敗する。Nix 管理の librdkafka を指定してコンパイルをスキップ。
         RDKAFKA_EXT_PATH = "${pkgs.rdkafka}";
+        # docker CLI 28 系が API 1.44 未満を切ったが、Podman の Docker 互換 API は 1.41 固定。
+        # バージョン交渉をスキップさせないと docker コマンドが一切通らない。
+        DOCKER_API_VERSION = "1.41";
       };
 
       # clang/clang++ wrapper を PATH 先頭に挿入する。
