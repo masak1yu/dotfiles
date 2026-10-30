@@ -109,6 +109,9 @@
         nativeBuildInputs = with pkgs; [
           _1password-cli
           pkg-config
+          # stdenv の coreutils は単一バイナリで argv[0] を見て動作を切り替えるため、
+          # argv0 を差し替える spawn（spinel のテスト等）が "unknown program" で落ちる。
+          (coreutils.override { singleBinary = false; })
         ];
 
         # ライブラリ — pkg-config が .pc を自動検出する
